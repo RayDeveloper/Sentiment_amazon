@@ -1,0 +1,131 @@
+# importing all the required Libraries
+import glob
+import json
+import csv
+import pandas as pd
+import numpy as np
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from wordcloud import WordCloud
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import sent_tokenize, word_tokenize
+from textblob import TextBlob
+from textblob.sentiments import NaiveBayesAnalyzer
+import string
+import matplotlib.pyplot as plt
+from nltk.stem import PorterStemmer
+import calendar
+import collections
+import warnings
+warnings.filterwarnings("ignore")
+
+# Creating a path for Review file i.e. input Data.
+file=glob.glob('Products/reviews_Beauty.json/reviews_Beauty.json')
+
+
+# Creating a path for meta Review file i.e. input Data.
+#file2=glob.glob('Products/meta_Cell_Phones_and_Accessories.json/meta_Cell_Phones_and_Accessories.json')
+
+# reading a multiple json files from a single json file 'ReviewSample.json'.
+review=[]
+with open(file[0]) as data_file:
+    data=data_file.read()
+    for i in data.split('\n'):
+        review.append(i)
+        
+# Making a list of Tuples containg all the data of json files.
+reviewDataframe=[]
+for x in review:
+    try:
+        jdata=json.loads(x)
+        reviewDataframe.append((jdata['reviewerID'],jdata['asin'],jdata['reviewerName'],jdata['helpful'][0],jdata['helpful'][1],jdata['reviewText'],jdata['overall'],jdata['summary'],jdata['unixReviewTime'],jdata['reviewTime'])) 
+    except:
+        pass        
+    
+# Creating a dataframe using the list of Tuples got in the previous step.    
+dataset=pd.DataFrame(reviewDataframe,columns=['Reviewer_ID','Asin','Reviewer_Name','helpful_UpVote','Total_Votes','Review_Text','Rating','Summary','Unix_Review_Time','Review_Time'])
+
+--------------------------------------------
+
+#Prints the frequency of values
+
+count = dataset['Asin'].value_counts()
+print(count)
+
+#Prints the mean
+
+count = dataset['Asin'].value_counts()
+mean_count= count.mean()
+print(mean_count)
+
+
+#Prints the median
+
+count = dataset['Asin'].value_counts()
+median_count= count.median()
+print(median_count)
+
+#Prints the ratings
+
+Rating_count = dataset['Rating'].value_counts()
+print(Rating_count)
+
+#Prints the helpful votes
+count = dataset['helpful_UpVote'].value_counts()
+print(count)
+
+#Number of reviews done per person ,ranked highest first
+count = dataset['Reviewer_Name'].value_counts()
+print(count)
+
+#High review
+high_review=dataset[dataset.helpful_UpVote == 3557]
+display(high_review)
+
+# Get the highest cost
+expensive=Product_dataset['Price'].max()
+print(expensive)
+
+#Merge the two datasets on ASIN| meta reviews which has prices and normal review 
+inner_merged_total = pd.merge(dataset, Product_dataset, on=["Asin"])
+inner_merged_total.head()
+inner_merged_total.shape
+
+#Plotting graph from merged the two merged datasets
+X = inner_merged_total[["Rating","helpful_UpVote"]]
+#Visualise data points
+plt.scatter(X["Rating"],X["helpful_UpVote"],c='black')
+plt.xlabel('Rating')
+plt.ylabel('Helpful Vote')
+plt.show()
+plt.savefig('ratingxhelpful.png', facecolor='k', bbox_inches='tight')
+
+#Plotting graph again
+X = dataset[["Total_Votes","helpful_UpVote"]]
+#Visualise data points
+plt.scatter(X["Total_Votes"],X["helpful_UpVote"],c='black')
+plt.xlabel('Helpful vote')
+plt.ylabel('Total_Votes')
+plt.show()
+
+#Plotting wordcloud from the titles column from the meta review dataset
+
+title_cloud=Product_dataset['Title']
+wordcloud = WordCloud(width=900, height=500).generate(str(title_cloud))
+plt.figure( figsize=(20,10), facecolor='k')
+plt.imshow(wordcloud)
+plt.axis("off")
+plt.tight_layout(pad=0)
+plt.show()
+plt.savefig('wordclouds_title.png', facecolor='k', bbox_inches='tight')
+
+#Plotting wordcloud from the reviever column from the meta review dataset
+
+title_cloud=Product_dataset['Review_Text']
+wordcloud = WordCloud(width=900, height=500).generate(str(title_cloud))
+plt.figure( figsize=(20,10), facecolor='k')
+plt.imshow(wordcloud)
+plt.axis("off")
+plt.tight_layout(pad=0)
+plt.show()
+plt.savefig('wordclouds_reviewer.png', facecolor='k', bbox_inches='tight')
